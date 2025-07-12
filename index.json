@@ -1,8 +1,26 @@
 [
   {
+    "name": "wget",
+    "desc": "Web downloader",
+    "version": "1.0.0",
+    "url": "packages/wget.js"
+  },
+    {
     "name": "adt",
     "desc": "Track all IPs and hops for a given URL or IP. Like traceroute/netstat.",
     "version": "1.0.0",
     "url": "packages/adt.js"
+  },
+  {
+    "name": "nano",
+    "desc": "Tiny terminal text editor",
+    "version": "1.0.0",
+    "url": "packages/nano.js"
+  },
+  {
+    "name": "man",
+    "desc": "Shows manual of any command",
+    "version": "1.0.0",
+    "url": "packages/man.js"
   }
 ]
