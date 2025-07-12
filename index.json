@@ -1,0 +1,8 @@
+[
+  {
+    "name": "adt",
+    "desc": "Track all IPs and hops for a given URL or IP. Like traceroute/netstat.",
+    "version": "1.0.0",
+    "url": "packages/adt.js"
+  }
+]
