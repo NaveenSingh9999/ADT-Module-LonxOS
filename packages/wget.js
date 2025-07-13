@@ -1,10 +1,10 @@
 // packages/wget.js
 
-import fs from 'fs/promises';
-import { createWriteStream } from 'fs';
-import path from 'path';
-import { request as httpsRequest } from 'https';
-import { request as httpRequest } from 'http';
+const fs = require('fs/promises');
+const { createWriteStream } = require('fs');
+const path = require('path');
+const { request: httpsRequest } = require('https');
+const { request: httpRequest } = require('http');
 
 /**
  * Real wget for Lonx OS on Vercel/Node.js
@@ -12,7 +12,7 @@ import { request as httpRequest } from 'http';
  *
  * Downloads a file (text or binary) from any URL and saves it to the user's current path.
  */
-export default async function main(args, lonx) {
+module.exports = async function main(args, lonx) {
     const { shell } = lonx;
 
     if (args.length < 1) {
@@ -137,4 +137,4 @@ export default async function main(args, lonx) {
     } catch (e) {
         shell.print(`\nError: ${e.message}`);
     }
-}
+};
