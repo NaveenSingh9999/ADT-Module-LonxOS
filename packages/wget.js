@@ -1,37 +1,56 @@
 // packages/wget.js
+
+import fs from 'fs/promises';
+import path from 'path';
+
 /**
- * Wget - A simple file downloader for Lonx OS.
- *
+ * Real wget for Lonx OS on Vercel/Node.js
  * Usage: wget <url> [output-filename]
  *
- * Downloads a file from a given URL and saves it to the filesystem.
- * If no output filename is provided, it will try to infer the name from the URL.
+ * Downloads a file (text or binary) from any URL and saves it to /tmp.
  */
 export default async function main(args, lonx) {
-    const { shell, fs, net } = lonx;
+    const { shell } = lonx;
 
     if (args.length < 1) {
         shell.print("Usage: wget <url> [output-file]");
         return;
     }
+
     const url = args[0];
-    const outputArg = args[1];
-    
-    // A very simplified wget. A real one would need a CORS proxy for web URLs for many sites.
-    // We will assume the resources are CORS-enabled.
+    let fileName = args[1];
+
     shell.print(`Downloading from ${url}...`);
 
     try {
-        // Use the resilient tryFetch function from the net core
-        const response = await net.tryFetch(url);
-        const data = await response.text();
+        const response = await fetch(url);
 
-        // Determine output path
-        const fileName = outputArg || url.split('/').pop().split('?')[0] || 'index.html';
-        const outputPath = `/home/user/${fileName}`;
+        if (!response.ok) {
+            shell.print(`\nError: HTTP ${response.status} ${response.statusText}`);
+            return;
+        }
 
-        fs.write(outputPath, data);
+        // Try to get filename from Content-Disposition
+        if (!fileName) {
+            const cd = response.headers.get('content-disposition');
+            if (cd && /filename="?([^"]+)"?/i.test(cd)) {
+                fileName = cd.match(/filename="?([^"]+)"?/i)[1];
+            } else {
+                fileName = url.split('/').pop().split('?')[0] || 'index.html';
+            }
+        }
+
+        // Only /tmp is writable on Vercel
+        const outputPath = path.join('/tmp', fileName);
+
+        // Download as buffer (binary-safe)
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        await fs.writeFile(outputPath, buffer);
+
         shell.print(`\nSaved to ${outputPath}`);
+        return outputPath;
 
     } catch (e) {
         shell.print(`\nError: ${e.message}`);
