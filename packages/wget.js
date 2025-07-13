@@ -1,25 +1,22 @@
 // packages/wget.js
 
-/**
- * Simple wget using fetch for browser/modern Node.js environments.
- * Usage: wget <url> [output-filename]
- */
-module.exports = async function main(args, lonx) {
-    const { shell, vfs } = lonx; // vfs: your virtual file system (if available)
+// Define wget as a global function for your OS to call
+async function wget(args, lonx) {
+    const { shell, vfs } = lonx || {};
 
-    if (args.length < 1) {
-        shell.print("Usage: wget <url> [output-file]");
+    if (!args || args.length < 1) {
+        if (shell && shell.print) shell.print("Usage: wget <url> [output-file]");
         return;
     }
 
     const url = args[0];
     let fileName = args[1];
 
-    shell.print(`Downloading from ${url}...`);
+    if (shell && shell.print) shell.print(`Downloading from ${url}...`);
 
-    // Extract filename from URL if not provided
     function extractFilename(url) {
-        return url.split('/').pop().split('?')[0] || 'index.html';
+        const part = url.split('/').pop().split('?')[0];
+        return part || 'index.html';
     }
 
     if (!fileName) {
@@ -30,21 +27,20 @@ module.exports = async function main(args, lonx) {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
 
-        // Read as arrayBuffer (for binary files) or text (for plain/text files)
+        // Decide if text or binary
+        const contentType = response.headers.get('content-type') || '';
         let data;
-        if (response.headers.get('content-type')?.includes('text')) {
+        if (contentType.includes('text') || contentType.includes('json')) {
             data = await response.text();
         } else {
             data = await response.arrayBuffer();
         }
 
-        // Save to virtual file system or trigger download
+        // Try to save in vfs, else fallback to browser download
         if (vfs && typeof vfs.writeFile === 'function') {
-            // Save in your OS's virtual file system
             await vfs.writeFile(fileName, data);
-            shell.print(`Saved to ${fileName}`);
+            if (shell && shell.print) shell.print(`Saved to ${fileName}`);
         } else {
-            // Fallback: trigger download in browser
             const blob = new Blob([data]);
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -52,11 +48,13 @@ module.exports = async function main(args, lonx) {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            shell.print(`Downloaded ${fileName}`);
+            if (shell && shell.print) shell.print(`Downloaded ${fileName}`);
         }
-
         return fileName;
     } catch (e) {
-        shell.print(`Error: ${e.message}`);
+        if (shell && shell.print) shell.print(`Error: ${e.message}`);
     }
-};
+}
+
+// (Optional) Register with your OS's command system if required
+// Example: if (window.lonxCommands) window.lonxCommands['wget'] = wget;
